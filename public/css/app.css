@@ -114,7 +114,7 @@ h2 { font-size: 18px; margin-bottom: 16px; }
 form.frm { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end; margin-bottom: 20px; }
 form.frm.stack { grid-template-columns: 1fr; }
 
-form.frm label { font-size: 13px; color: var(--muted); display: block; margin-bottom: -8px; }
+form.frm label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 4px; }
 form.frm input, form.frm select, form.frm textarea {
   width: 100%;
   padding: 9px 12px;
