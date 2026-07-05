@@ -1,59 +1,67 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# RentDesk — Multi-Tenant Property Management System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+> **⚠️ Vibe-coded practice project.** This system was built almost entirely
+> through AI-assisted ("vibe coding") prompts rather than hand-written,
+> line-by-line engineering. It exists as a **DevSecOps training ground**: a
+> realistic app to practice *finding and fixing the security issues that
+> vibe-coded software tends to ship with* — broken authorization, insecure
+> defaults, missing input validation, secrets handling, dependency risk, and
+> so on. Treat every part of it as something to audit, not something to
+> trust by default. Do not deploy this as-is to handle real tenant/PII/payment
+> data without a full security review.
 
-## About Laravel
+## What it is
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+A Laravel REST API backing a property-management platform with three roles:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Admin** — platform-wide visibility, suspends/activates owners, sees analytics across every tenant of the platform.
+- **Owner** (landlord) — manages their own properties, units, tenants, payments, maintenance requests, and messaging. Fully isolated from other owners' data.
+- **Tenant** — sees only their own unit, payments, maintenance requests, and messages.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Two front ends talk to the same API:
 
-## Learning Laravel
+- [`public/js/app.js`](public/js/app.js) + [`public/css/app.css`](public/css/app.css) — a zero-build vanilla JS SPA served directly by Laravel at `/`.
+- [`frontend/`](frontend/) — a separate Vite + React app, useful for comparing the same feature set built with a different stack.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Architecture notes (a.k.a. what to go audit)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- **Multi-tenancy**: row-level isolation via an `owner_id` column + an Eloquent global scope (`OwnerScope`), not schema-per-tenant. Worth checking: does *every* query path actually apply the scope? Are there any raw queries or `withoutGlobalScope` calls that leak data across owners?
+- **AuthN**: Laravel Sanctum. Browser clients get an **HttpOnly session cookie** (CSRF-protected); no bearer token ever touches JavaScript. API clients can still use Sanctum personal access tokens.
+- **AuthZ**: Laravel Policies per model (`app/Policies/`), gating create/view/update/delete per role.
+- **CORS**: intentionally unconfigured — the React dev server proxies `/api` and `/sanctum` to Laravel so the browser is always same-origin. If you add a real cross-origin frontend, that's the point to review CORS/cookie/`SameSite` settings properly.
+- **Suspension enforcement**: `EnsureActive` middleware blocks suspended owners mid-session, not just at login — check whether that's actually wired into every guarded route.
 
-## Laravel Sponsors
+This is a non-exhaustive list — a big part of the exercise is finding what's *not* on it.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Running it
 
-### Premium Partners
+**Backend (Laravel API):**
+```
+composer install
+cp .env.example .env   # then set DB + APP_KEY as usual
+php artisan migrate --seed
+php artisan serve --port=8000
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+**Seeded accounts** (password: `password`):
 
-## Contributing
+| Role   | Email                |
+|--------|-----------------------|
+| Admin  | admin@example.com     |
+| Owner  | owner@example.com     |
+| Tenant | tenant@example.com    |
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+**Vanilla JS UI**: visit `http://localhost:8000/` once the backend is running.
 
-## Code of Conduct
+**React UI** (optional, separate process):
+```
+cd frontend
+npm install
+npm run dev   # http://localhost:5173, proxies API calls to :8000
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Full route list: `php artisan route:list --path=api`
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT (inherited from the Laravel starter this project was scaffolded from).
