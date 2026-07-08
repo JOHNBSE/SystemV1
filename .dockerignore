@@ -1,0 +1,12 @@
+.git
+.env
+vendor
+node_modules
+frontend/node_modules
+frontend/dist
+storage/logs
+storage/framework/cache
+storage/framework/sessions
+storage/framework/views
+tests
+.github
