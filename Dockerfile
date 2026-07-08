@@ -12,4 +12,4 @@ RUN cp -n .env.example .env \
     && composer install --no-interaction --prefer-dist
 
 EXPOSE 8000
-CMD ["sh", "-c", "php artisan key:generate --force && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000"]
+CMD ["sh", "-c", "[ -z \"$APP_KEY\" ] && php artisan key:generate --force; php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000"]

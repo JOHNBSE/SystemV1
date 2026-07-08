@@ -7,6 +7,9 @@ services:
       APP_ENV: local
       APP_DEBUG: "true"
       APP_URL: http://localhost:8000
+      # ponytail: secrets hardcoded here for local-dev simplicity. Move APP_KEY/DB_PASSWORD
+      # to a gitignored root .env + ${VAR} substitution if this ever leaves local dev.
+      APP_KEY: base64:rLjV7vBYX+IeKCfQVjUkK/5VK2zcvV0nZiYHiHcQADY=
       DB_CONNECTION: mysql
       DB_HOST: db
       DB_PORT: 3306
