@@ -12,4 +12,7 @@ RUN cp -n .env.example .env \
     && composer install --no-interaction --prefer-dist
 
 EXPOSE 8000
-CMD ["sh", "-c", "[ -z \"$APP_KEY\" ] && php artisan key:generate --force; php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000 --no-reload"]
+# ponytail: mysql's official image can report the healthcheck "healthy" against its own
+# temporary init-time server, right before it restarts for real and briefly refuses
+# connections. depends_on+healthcheck alone isn't enough on a fresh volume, so retry here.
+CMD ["sh", "-c", "[ -z \"$APP_KEY\" ] && php artisan key:generate --force; i=0; until php artisan migrate --force; do i=$((i+1)); [ $i -ge 10 ] && exit 1; sleep 3; done; php artisan serve --host=0.0.0.0 --port=8000 --no-reload"]
