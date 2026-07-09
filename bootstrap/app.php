@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\EnsureActive;
+use App\Http\Middleware\EnsureRole;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,11 +18,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
 
         $middleware->alias([
-            'role' => \App\Http\Middleware\EnsureRole::class,
+            'role' => EnsureRole::class,
         ]);
 
-        $middleware->web(append: \App\Http\Middleware\SecurityHeaders::class);
-        $middleware->api(append: \App\Http\Middleware\EnsureActive::class);
+        $middleware->web(append: SecurityHeaders::class);
+        $middleware->api(append: EnsureActive::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
